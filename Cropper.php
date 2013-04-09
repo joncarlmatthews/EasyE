@@ -1,27 +1,95 @@
 <?php
 
-class EazyE_ImageCropper
+require_once 'Exception.php';
+
+namespace EazyE
+
+class Cropper
 {
     var $source_image;
     var $new_image_name;
     var $save_to_folder;
+
+    const CROP_LOCATION_RIGHT = 'right';
+    const CROP_LOCATION_CENTER = 'center';
+    const CROP_LOCATION_LEFT = 'left';
+
+    private $_sourceFileLocation = null;
+    private $_newFileLocation = null;
     
-    const RESULT_CROP_ALREADY_SQUARE = 'crop_already_square';
+    const CROP_RESULT_SUCCESS = 'crop_success';
+    const CROP_RESULT_ALREADY_SQUARE = 'crop_already_square';
+
+    public function __construct($sourceFileLocation = null, 
+                                    $newFileLocation = null)
+    {
+        if (!is_null($sourceFileLocation)){
+            $this->setSourceFileLocation($sourceFileLocation);
+        }
+
+        if (!is_null($newFileLocation)){
+            $this->setNewFileLocation($newFileLocation);
+        }
+    }
+
+    public function setSourceFileLocation($fileLocation)
+    {
+        if( (!is_file($fileLocation)) || (!file_exists($fileLocation)) ){
+            throw new Exception('Source file does not exist');
+        }elseif(!is_readable($fileLocation)){
+            throw new Exception('Source file is not readable');
+        }
+
+        $this->_sourceFileLocation = $fileLocation;
+
+        return $this;
+    }
+
+    public function setNewFileLocation($fileLocation)
+    {
+        if( (!is_file($fileLocation)) || (!file_exists($fileLocation)) ){
+            throw new Exception('Source file does not exist');
+        }elseif(!is_readable($fileLocation)){
+            throw new Exception('Source file is not readable');
+        }
+
+        $this->_newFileLocation = $fileLocation;
+        
+        return $this;
+    }
+
+    public function getSourceFileLocation()
+    {
+        if (is_null($this->_sourceFileLocation)){
+            throw new Exception('Source file location not set');
+        }
+
+        return $this->_sourceFileLocation;
+    }
+
+    public function getNewFileLocation()
+    {
+        if (is_null($this->_newFileLocation)){
+            return $this->_sourceFileLocation;
+        }
+
+        return $this->_newFileLocation;
+    }
 
     public function toSquare($location = 'center')
     {
         $info = GetImageSize($this->source_image);
 
-        $width = $info[0];
-        $height = $info[1];
+        $width = (int)$info[0];
+        $height = (int)$info[1];
         $mime = $info['mime'];
         
         $compression = 100;
         
-        if($width == $height){
+        if ($width == $height){
             
             // The source image is already a square.
-            return array('result' => self::RESULT_CROP_ALREADY_SQUARE,
+            return array('result' => self::CROP_RESULT_ALREADY_SQUARE,
                             'new_file_path' => $this->source_image,
                             'height' => $height,
                             'width' => $width);
