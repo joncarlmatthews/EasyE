@@ -10,16 +10,20 @@ class Cropper extends AbstractImageProcessor
     const CROP_LOCATION_RIGHT = 'right';
     const CROP_LOCATION_CENTER = 'center';
     const CROP_LOCATION_LEFT = 'left';
-
-    private $_sourceFileLocation = null;
-    private $_newFileLocation = null;
     
     const CROP_RESULT_SUCCESS = 'crop_success';
     const CROP_RESULT_ALREADY_SQUARE = 'crop_already_square';
 
+    private $_sourceFileLocation = null;
+    private $_newFileLocation = null;
+    private $_croppedFilePermissions = 0755;
+    private $_cropQuality = 100;
+
     public function __construct($sourceFileLocation = null, 
                                     $newFileLocation = null)
     {
+        parent::__construct();
+
         if (!is_null($sourceFileLocation)){
             $this->setSourceFileLocation($sourceFileLocation);
         }
@@ -229,14 +233,14 @@ class Cropper extends AbstractImageProcessor
             }
 
             // Save image 
-            $process = $imageSaveFunc($newImage, $filename, 100);
+            $process = $imageSaveFunc($newImage, $filename, $this->_cropQuality);
             
             if (!$process){
                 throw new Exception('There was a problem saving the cropped image.');
             }
 
             // Set permissions of the cropped image.
-            chmod($filename, 0755);
+            chmod($filename, $this->_croppedFilePermissions);
 
             // Return result.
             return array('result' => self::CROP_RESULT_SUCCESS,
