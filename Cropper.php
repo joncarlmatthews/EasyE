@@ -1,10 +1,11 @@
 <?php
 
-//require_once 'Exception.php';
+namespace EasyE;
 
-namespace EazyE
+require_once 'Exception.php';
+require_once 'AbstractImageProcessor.php';
 
-class Cropper extends ImageProcessorAbstract
+class Cropper extends AbstractImageProcessor
 {
     const CROP_LOCATION_RIGHT = 'right';
     const CROP_LOCATION_CENTER = 'center';
@@ -31,9 +32,9 @@ class Cropper extends ImageProcessorAbstract
     public function setSourceFileLocation($fileLocation)
     {
         if( (!is_file($fileLocation)) || (!file_exists($fileLocation)) ){
-            throw new Exception('Source file does not exist');
+            throw new Exception('Source file does not exist.');
         }elseif(!is_readable($fileLocation)){
-            throw new Exception('Source file is not readable');
+            throw new Exception('Source file is not readable.');
         }
 
         $this->_sourceFileLocation = $fileLocation;
@@ -43,10 +44,12 @@ class Cropper extends ImageProcessorAbstract
 
     public function setNewFileLocation($fileLocation)
     {
-        if( (!is_file($fileLocation)) || (!file_exists($fileLocation)) ){
-            throw new Exception('Source file does not exist');
-        }elseif(!is_readable($fileLocation)){
-            throw new Exception('Source file is not readable');
+        $dir = dirname($fileLocation);
+
+        if(!is_dir($dir) ){
+            throw new Exception('New file directory (' . $dir . ') does not exist.');
+        }elseif(!is_writable($dir)){
+            throw new Exception('New file directory (' . $dir . ') is not writable.');
         }
 
         $this->_newFileLocation = $fileLocation;
@@ -68,7 +71,7 @@ class Cropper extends ImageProcessorAbstract
         return $this->_newFileLocation;
     }
 
-    public function toSquare($location = 'center')
+    public function cropToSquare($location = 'center')
     {
         $sourceFile     = $this->getSourceFileLocation();
         $newFile        = $this->getNewFileLocation();
@@ -212,9 +215,17 @@ class Cropper extends ImageProcessorAbstract
             }
                 
             if(is_null($newFile)){
+
                 $filename = $sourceFile;
+
+                if (!is_writable($filename)){
+                    throw new Exception('Insufficient privileges to write to ' . $filename);
+                }
+
             }else{
+
                 $filename = $newFile;
+
             }
 
             // Save image 
@@ -224,7 +235,7 @@ class Cropper extends ImageProcessorAbstract
                 throw new Exception('There was a problem saving the cropped image.');
             }
 
-            // ?
+            // Set permissions of the cropped image.
             chmod($filename, 0755);
 
             // Return result.

@@ -1,5 +1,5 @@
 <?php
 
-namespace EazyE
+namespace EasyE;
 
 class Exception extends \Exception {}
