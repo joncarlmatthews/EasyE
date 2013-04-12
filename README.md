@@ -12,12 +12,15 @@ Example of Cropping
 -------------------------
 <pre><code>// Load the Cropper Class.
 require 'EasyE/Cropper.php';
+
 // Create a new Cropper object.
 $cropper = new Cropper;
+
 // Make a square crop of image.png and save it as image-cropped.png
 $res = $cropper->setSourceFileLocation('/path/to/image.png')
                 ->setSourceFileLocation('/path/to/image-cropped.png')
-                ->cropToSquare();                
+                ->cropToSquare();  
+                
 // View the result data:
 echo '\<pre\>';
 print_r($res);
