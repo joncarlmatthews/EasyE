@@ -1,16 +1,29 @@
-EasyE Image Processor
+EasyE
 ============
 
-The EasyE Processor is a simple, easy to use PHP image processing library using GD library.
+The EasyE library is a collection of simple, easy to use PHP image processing classes using the GD extension.
 
 There are currently two main components to the library:
 
 1.  Image Cropping
 2.  Image Resizing
 
-Example Usage
+Example of Cropping
 -------------------------
-<pre><code>
-require 'EasyE/Image';
-Cropper
+<pre><code>// Load the Cropper Class.
+require 'EasyE/Cropper.php';
+
+// Create a new instance of the Cropper class.
+$cropper = new Cropper;
+
+// Make a square crop of image.png and save it as image-cropped.png
+$res = $cropper->setSourceFileLocation('/path/to/image.png')
+                ->setSourceFileLocation('/path/to/image-cropped.png')
+                ->cropToSquare();
+                
+// View the result data:
+echo '<pre>';
+print_r($res);
+echo '</pre>';
+
 </pre></code>
