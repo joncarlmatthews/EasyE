@@ -10,7 +10,7 @@ There are currently two main components to the library:
 
 Example of Cropping
 -------------------------
-<code>// Load the Cropper Class.
+<pre><code>// Load the Cropper Class.
 require 'EasyE/Cropper.php';
 
 // Create a new Cropper object.
@@ -24,4 +24,4 @@ $res = $cropper->setSourceFileLocation('/path/to/image.png')
 // View the result data:
 echo '\<pre\>';
 print_r($res);
-echo '\</pre\>';</code>
+echo '\</pre\>';</code></pre>
