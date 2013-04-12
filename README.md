@@ -18,10 +18,10 @@ $cropper = new Cropper;
 
 // Make a square crop of image.png and save it as image-cropped.png
 $res = $cropper->setSourceFileLocation('/path/to/image.png')
-                ->setSourceFileLocation('/path/to/image-cropped.png')
+                ->setNewFileLocation('/path/to/image-cropped.png')
                 ->cropToSquare();  
                 
 // View the result data:
 echo '\<pre\>';
 print_r($res);
-echo '\</pre\>';</pre></code>
+echo '\</pre\>';</code></pre>
