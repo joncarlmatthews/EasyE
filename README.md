@@ -30,7 +30,7 @@ Example of Resizing
 require 'EasyE/Resizer.php';
 
 // Create a new Resizer object.
-resizer = new Resizer;
+$resizer = new Resizer;
 
 // Resize image-square.png to have a miximum height and width of 75 pixels. Save it as image-thumb.png
 $res = $resizer->setSourceFileLocation('/path/to/image-square.png')
@@ -40,3 +40,5 @@ $res = $resizer->setSourceFileLocation('/path/to/image-square.png')
 // View the result data:
 print_r($res);</code></pre>
 
+More Details:
+-------------------------
