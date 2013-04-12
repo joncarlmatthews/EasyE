@@ -22,8 +22,8 @@ $res = $cropper->setSourceFileLocation('/path/to/image.png')
                 ->cropToSquare();
                 
 // View the result data:
-echo '<pre>';
+echo '\<pre\>';
 print_r($res);
-echo '</pre>';
+echo '\</pre\>';
 
 </pre></code>
