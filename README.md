@@ -42,3 +42,4 @@ print_r($res);</code></pre>
 
 More Details:
 -------------------------
+This library is still in production and not yet production ready.
