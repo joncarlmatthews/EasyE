@@ -1,6 +1,8 @@
 EasyE
 ============
 
+**Note this library is in development and isn't fully working yet**
+
 The EasyE library is a collection of simple, easy to use PHP image processing classes using the GD extension.
 
 There are currently two main components to the library:

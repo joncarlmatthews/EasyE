@@ -177,39 +177,34 @@ class Cropper extends AbstractImageProcessor
                 break;
         }
 
-        // Calculate the coordinates.
-
         // Does the destination file already exists?
         if (is_file($destinationFileLocation)){
-
-            //if ( ($sourceFileWidth == $sourceFileHeight){
 
             $destinationFileInfo     = GetImageSize($destinationFileLocation);
             $destinationFileWidth    = (int)$destinationFileInfo[0];
             $destinationFileHeight   = (int)$destinationFileInfo[1];
             $destinationFileMime     = pathinfo($destinationFileInfo, PATHINFO_EXTENSION);
 
-            if ($destinationFileLocation == $destinationFileLocation){
+            // Are the dimensions of the desination file already square?
+            if ($destinationFileWidth == $destinationFileHeight){
 
+                // The source image is already a square, return result.
+                return array('result' => self::CROP_RESULT_NOTHING_TO_DO,
+                                'sourceFilePath' => $sourceFileLocation,
+                                'sourceFileHeight' => $sourceFileHeight,
+                                'sourceFileWidth' => $sourceFileWidth,
+                                'destinationFilePath' => $sourceFileLocation,
+                                'destinationFileHeight' => $sourceFileHeight,
+                                'destinationFileWidth' => $sourceFileWidth
+                                );
+            }else{
+                die('TODO overwrite destination with source.');
             }
-
-            // The source image is already a square, return result.
-            return array('result' => self::CROP_RESULT_NOTHING_TO_DO,
-                            'sourceFilePath' => $sourceFileLocation,
-                            'sourceFileHeight' => $sourceFileHeight,
-                            'sourceFileWidth' => $sourceFileWidth,
-                            'destinationFilePath' => $sourceFileLocation,
-                            'destinationFileHeight' => $sourceFileHeight,
-                            'destinationFileWidth' => $sourceFileWidth
-                            );
-
         
         }
 
-        // Already square?
+        // Are the dimensions of the source file already square?
         if($sourceFileHeight == $sourceFileWidth){
-
-
 
             // The source image is already a square, return result.
             return array('result' => self::CROP_RESULT_NOTHING_TO_DO,
@@ -220,6 +215,8 @@ class Cropper extends AbstractImageProcessor
                             'destinationFileHeight' => $sourceFileHeight,
                             'destinationFileWidth' => $sourceFileWidth
                             );
+
+        // Calculate the coordinates.
 
         // Horizontal Rectangle?
         }elseif($sourceFileWidth > $sourceFileHeight){
@@ -273,10 +270,13 @@ class Cropper extends AbstractImageProcessor
 
         // Return result.
         return array('result' => self::CROP_RESULT_SUCCESS,
-                        'filePath' => $filename,
-                        'sourceFileHeight' => $newHeight,
-                        'sourceFileWidth' => $newWidth);
-
+                            'sourceFilePath' => $sourceFileLocation,
+                            'sourceFileHeight' => $sourceFileHeight,
+                            'sourceFileWidth' => $sourceFileWidth,
+                            'destinationFilePath' => $destinationFileLocation,
+                            'destinationFileHeight' => $destinationFileHeight,
+                            'destinationFileWidth' => $destinationFileWidth
+                            );
     }
 
     private function _performCrop()
