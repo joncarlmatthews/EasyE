@@ -11,15 +11,16 @@ class Cropper extends AbstractImageProcessor
     const CREATE_METHOD_PNG     = 'ImageCreateFromPNG';
     const CREATE_METHOD_BMP     = 'ImageCreateFromBMP';
     const CREATE_METHOD_GIF     = 'ImageCreateFromGIF';
-    const CREATE_METHOD_WBNP    = 'ImageCreateFromWBMP';
-    const CREATE_METHOD_XBM     = 'ImageCreateFromXBM';
 
     const SAVE_METHOD_JPEG    = 'ImageJPEG';
     const SAVE_METHOD_PNG     = 'ImagePNG';
     const SAVE_METHOD_BMP     = 'ImageBMP';
     const SAVE_METHOD_GIF     = 'ImageGIF';
-    const SAVE_METHOD_WBNP    = 'ImageWBMP';
-    const SAVE_METHOD_XBM     = 'ImageXBM';
+
+    const FILE_EXT_JPEG    = 'jpg';
+    const FILE_EXT_PNG     = 'png';
+    const FILE_EXT_BMP     = 'bmp';
+    const FILE_EXT_GIF     = 'gif';
 
     const CROP_LOCATION_RIGHT = 'right';
     const CROP_LOCATION_CENTER = 'center';
@@ -32,6 +33,9 @@ class Cropper extends AbstractImageProcessor
     private $_destinationFileLocation = null;
     private $_croppedFilePermissions = 0755;
     private $_cropQuality = 100;
+
+    private $_createMethod = null;
+    private $_saveMethod = null;
 
     public function __construct($sourceFileLocation = null, 
                                     $destinationFileLocation = null)
