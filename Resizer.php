@@ -125,7 +125,7 @@ class EazyE_ImageResizer
                                                 $newPath = null, 
                                                 $maxwidth = 1000, 
                                                 $maxheight = 1000, 
-                                                $quality = 90)
+                                                $quality = 100)
     {
         if (is_null($newPath)) {
             $newPath = $filePath;
