@@ -7,6 +7,20 @@ require_once 'AbstractImageProcessor.php';
 
 class Cropper extends AbstractImageProcessor
 {
+    const CREATE_METHOD_JPEG    = 'ImageCreateFromJPEG';
+    const CREATE_METHOD_PNG     = 'ImageCreateFromPNG';
+    const CREATE_METHOD_BMP     = 'ImageCreateFromBMP';
+    const CREATE_METHOD_GIF     = 'ImageCreateFromGIF';
+    const CREATE_METHOD_WBNP    = 'ImageCreateFromWBMP';
+    const CREATE_METHOD_XBM     = 'ImageCreateFromXBM';
+
+    const SAVE_METHOD_JPEG    = 'ImageJPEG';
+    const SAVE_METHOD_PNG     = 'ImagePNG';
+    const SAVE_METHOD_BMP     = 'ImageBMP';
+    const SAVE_METHOD_GIF     = 'ImageGIF';
+    const SAVE_METHOD_WBNP    = 'ImageWBMP';
+    const SAVE_METHOD_XBM     = 'ImageXBM';
+
     const CROP_LOCATION_RIGHT = 'right';
     const CROP_LOCATION_CENTER = 'center';
     const CROP_LOCATION_LEFT = 'left';
@@ -20,7 +34,7 @@ class Cropper extends AbstractImageProcessor
     private $_cropQuality = 100;
 
     public function __construct($sourceFileLocation = null, 
-                                    $newFileLocation = null)
+                                    $destinationFileLocation = null)
     {
         parent::__construct();
 
@@ -28,8 +42,8 @@ class Cropper extends AbstractImageProcessor
             $this->setSourceFileLocation($sourceFileLocation);
         }
 
-        if (!is_null($newFileLocation)){
-            $this->setDestinationFileLocation($newFileLocation);
+        if (!is_null($destinationFileLocation)){
+            $this->setDestinationFileLocation($destinationFileLocation);
         }
     }
 
@@ -75,8 +89,10 @@ class Cropper extends AbstractImageProcessor
         return $this->_destinationFileLocation;
     }
 
-    public function cropToSquare($location = 'center')
+    public function cropToSquare($location = self::CROP_LOCATION_CENTER)
     {
+        $this->_preCropChecks();
+
         $sourceFileLocation = $this->getSourceFileLocation();
 
         $sourceFileInfo     = GetImageSize($sourceFileLocation);
@@ -84,56 +100,87 @@ class Cropper extends AbstractImageProcessor
         $sourceFileHeight   = (int)$sourceFileInfo[1];
         $sourceFileMime     = pathinfo($sourceFileLocation, PATHINFO_EXTENSION);
 
-        $newFileLocation = $this->getDestinationFileLocation();
-
         // What sort of image are we cropping?         
         switch ($sourceFileMime){
             case 'jpg':
             case 'jpeg':
                 $imageCreateFunc = 'ImageCreateFromJPEG';
+                break;
+
+            case 'png':
+                $imageCreateFunc = 'ImageCreateFromPNG';
+                break;
+
+            case 'bmp':
+                $imageCreateFunc = 'ImageCreateFromBMP';
+                break;
+
+            case 'gif':
+                $imageCreateFunc = 'ImageCreateFromGIF';
+                break;
+
+            case 'vnd.wap.wbmp':
+                $imageCreateFunc = 'ImageCreateFromWBMP';
+                break;
+
+            case 'xbm':
+                $imageCreateFunc = 'ImageCreateFromXBM';
+                break;
+
+            default:
+                throw new Exception('Mime type ' 
+                                        . $sourceFileMime 
+                                        . 'not supported for image creation.');
+                break;
+        }
+
+        $destinationFileLocation = $this->getDestinationFileLocation();
+        $destinationFileMime     = pathinfo($destinationFileLocation, PATHINFO_EXTENSION);
+
+        // What sort of image are we saving?         
+        switch ($destinationFileMime){
+            case 'jpg':
+            case 'jpeg':
                 $imageSaveFunc = 'ImageJPEG';
                 $newImageExt = 'jpg';
                 break;
 
             case 'png':
-                $imageCreateFunc = 'ImageCreateFromPNG';
                 $imageSaveFunc = 'ImagePNG';
                 $newImageExt = 'png';
                 break;
 
             case 'bmp':
-                $imageCreateFunc = 'ImageCreateFromBMP';
                 $imageSaveFunc = 'ImageBMP';
                 $newImageExt = 'bmp';
                 break;
 
             case 'gif':
-                $imageCreateFunc = 'ImageCreateFromGIF';
                 $imageSaveFunc = 'ImageGIF';
                 $newImageExt = 'gif';
                 break;
 
             case 'vnd.wap.wbmp':
-                $imageCreateFunc = 'ImageCreateFromWBMP';
                 $imageSaveFunc = 'ImageWBMP';
                 $newImageExt = 'bmp';
                 break;
 
             case 'xbm':
-                $imageCreateFunc = 'ImageCreateFromXBM';
                 $imageSaveFunc = 'ImageXBM';
                 $newImageExt = 'xbm';
                 break;
 
             default:
-                throw new Exception('Mime type ' . $sourceFileMime . 'not supported.');
+                throw new Exception('Mime type ' 
+                                        . $destinationFileMime 
+                                        . 'not supported for image saving.');
                 break;
         }
 
         // Calculate the coordinates.
 
         // Does the destination file already exists?
-        if (is_file($newFileLocation)){
+        if (is_file($destinationFileLocation)){
 
             //if ( ($sourceFileWidth == $sourceFileHeight){
 
@@ -142,7 +189,7 @@ class Cropper extends AbstractImageProcessor
             $destinationFileHeight   = (int)$destinationFileInfo[1];
             $destinationFileMime     = pathinfo($destinationFileInfo, PATHINFO_EXTENSION);
 
-            if ($destinationFileLocation == $newFileLocation){
+            if ($destinationFileLocation == $destinationFileLocation){
 
             }
 
@@ -150,7 +197,25 @@ class Cropper extends AbstractImageProcessor
             return array('result' => self::CROP_RESULT_NOTHING_TO_DO,
                             'sourceFilePath' => $sourceFileLocation,
                             'sourceFileHeight' => $sourceFileHeight,
-                            'sourceFileWidth' => $sourceFileWidth
+                            'sourceFileWidth' => $sourceFileWidth,
+                            'destinationFilePath' => $sourceFileLocation,
+                            'destinationFileHeight' => $sourceFileHeight,
+                            'destinationFileWidth' => $sourceFileWidth
+                            );
+
+        
+        }
+
+        // Already square?
+        if($sourceFileHeight == $sourceFileWidth){
+
+
+
+            // The source image is already a square, return result.
+            return array('result' => self::CROP_RESULT_NOTHING_TO_DO,
+                            'sourceFilePath' => $sourceFileLocation,
+                            'sourceFileHeight' => $sourceFileHeight,
+                            'sourceFileWidth' => $sourceFileWidth,
                             'destinationFilePath' => $sourceFileLocation,
                             'destinationFileHeight' => $sourceFileHeight,
                             'destinationFileWidth' => $sourceFileWidth
@@ -206,7 +271,17 @@ class Cropper extends AbstractImageProcessor
             $newHeight = $sourceFileWidth;
         }
 
-        $image = $imageCreateFunc($sourceFileLocation);
+        // Return result.
+        return array('result' => self::CROP_RESULT_SUCCESS,
+                        'filePath' => $filename,
+                        'sourceFileHeight' => $newHeight,
+                        'sourceFileWidth' => $newWidth);
+
+    }
+
+    private function _performCrop()
+    {
+        $image = $imageCreateFunc($this->getSourceFileLocation());
         
         if (!$image){
             throw new Exception('Could not create image using ' . $imageCreateFunc);
@@ -230,9 +305,9 @@ class Cropper extends AbstractImageProcessor
             throw new Exception('Could not crop image using imagecopyresampled()');
         }
             
-        if(is_null($sourceFileLocation)){
+        if(is_null($this->getSourceFileLocation())){
 
-            $filename = $sourceFileLocation;
+            $filename = $this->getSourceFileLocation();
 
             if (!is_writable($filename)){
                 throw new Exception('Insufficient privileges to write to ' . $filename);
@@ -240,7 +315,7 @@ class Cropper extends AbstractImageProcessor
 
         }else{
 
-            $filename = $sourceFileLocation;
+            $filename = $this->getSourceFileLocation();
 
         }
 
@@ -253,12 +328,10 @@ class Cropper extends AbstractImageProcessor
 
         // Set permissions of the cropped image.
         chmod($filename, $this->_croppedFilePermissions);
+    }
 
-        // Return result.
-        return array('result' => self::CROP_RESULT_SUCCESS,
-                        'filePath' => $filename,
-                        'sourceFileHeight' => $newHeight,
-                        'sourceFileWidth' => $newWidth);
-
+    private function _preCropChecks()
+    {
+        // Is writtable etc here
     }
 }
