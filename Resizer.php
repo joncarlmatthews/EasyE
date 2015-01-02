@@ -117,9 +117,11 @@ class Resizer extends AbstractImageProcessor
         
         // Do we even need to resize the image!?
         if ($actualWidth <= $maxwidth && $actualHeight <= $maxheight){
-            return array('result' => self::RESULT_RESIZE_NOT_REQUIRED,
-                            'newHeight' => $actualHeight,
-                            'newWidth' => $actualWidth);
+            return array('source'           => $this->getSourceFileLocation(),
+                            'destination'   => $this->getDestinationFileLocation(),
+                            'result'        => self::RESULT_RESIZE_NOT_REQUIRED,
+                            'newHeight'     => $actualHeight,
+                            'newWidth'      => $actualWidth);
         }
         
         $ratio = $actualWidth / $maxwidth;
