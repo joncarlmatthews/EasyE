@@ -202,7 +202,11 @@ class Resizer extends AbstractImageProcessor
                             $this->_actualWidth, 
                             $this->_actualHeight);
                             
-        imagejpeg($new_img, $this->getDestinationFileLocation(), $this->_quality);
+        $res = @imagejpeg($new_img, $this->getDestinationFileLocation(), $this->_quality);
+
+        if (!$res){
+            throw new Exception('imagejpeg failed. Check permission of file.');
+        }
     }
     
     /**
@@ -230,7 +234,11 @@ class Resizer extends AbstractImageProcessor
                             $this->_actualWidth, 
                             $this->_actualHeight);
                             
-        imagejpeg($new_img, $this->getDestinationFileLocation(), $this->_quality);
+        $res = @imagejpeg($new_img, $this->getDestinationFileLocation(), $this->_quality);
+
+        if (!$res){
+            throw new Exception('imagejpeg failed. Check permission of file.');
+        }
     }
     
     /**
@@ -256,7 +264,11 @@ class Resizer extends AbstractImageProcessor
                             $this->_actualWidth, 
                             $this->_actualHeight);
                             
-        imagepng($new_img, $this->getDestinationFileLocation());        
+        $res = @imagepng($new_img, $this->getDestinationFileLocation());   
+
+        if (!$res){
+            throw new Exception('imagepng failed. Check permission of file.');
+        }     
     }
     
     /**
@@ -282,6 +294,10 @@ class Resizer extends AbstractImageProcessor
                             $this->_actualWidth, 
                             $this->_actualHeight);
                             
-        imagegif($new_img, $this->getDestinationFileLocation());    
+        $res = @imagegif($new_img, $this->getDestinationFileLocation());
+
+        if (!$res){
+            throw new Exception('imagegif failed. Check permission of file.');
+        }
     }
 }
