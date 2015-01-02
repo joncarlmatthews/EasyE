@@ -37,7 +37,7 @@ $resizer = new Resizer;
 // Resize image-square.png to have a miximum height and width of 75 pixels. Save it as image-thumb.png
 $res = $resizer->setSourceFileLocation('/path/to/image-square.png')
                 ->setDestinationFileLocation('/path/to/image-thumb.png')
-                ->resize(75, 75, true);  
+                ->resize(75, 75);  
                 
 // View the result data:
 print_r($res);</code></pre>
