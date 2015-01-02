@@ -172,9 +172,12 @@ class Resizer extends AbstractImageProcessor
                 break;
         }
         
-        return array('result' => self::RESULT_RESIZE_SUCCESSFUL,
-                        'newHeight' => $newHeight,
-                        'newWidth' => $newWidth);
+        return array('source'           => $this->getSourceFileLocation(),
+                        'destination'   => $this->getDestinationFileLocation(),
+                        'result'        => self::RESULT_RESIZE_SUCCESSFUL,
+                        'newHeight'     => $newHeight,
+                        'newWidth'      => $newWidth,
+                        );
                 
     }
     
