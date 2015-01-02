@@ -1,9 +1,9 @@
 <?php
 
 /**
- * EazyE ImageResizer
+ * EasyE Resizer
  *
- * @link      https://github.com/joncarlmatthews/ImageResizer/ for the canonical source repository
+ * @link      https://github.com/joncarlmatthews/EasyE for the canonical source repository
  * @license   GNU General Public License
  *
  * File format: UNIX
@@ -11,12 +11,17 @@
  * File indentation: Spaces (4). No tabs
  */
 
+namespace EasyE;
+
+require_once 'Exception.php';
+require_once 'AbstractImageProcessor.php';
+
 /**
- * The EazyE_ImageResizer class provides methods for resizing an image.
+ * The Resizer class provides methods for resizing an image.
  * 
  * @author Jon Matthews <joncarlmatthews@gmail.com> 
  */
-class EazyE_ImageResizer
+class Resizer extends AbstractImageProcessor
 {
     /**
      * Flag for resize not required resolution.
@@ -33,22 +38,6 @@ class EazyE_ImageResizer
      * @var string
      */
     const RESULT_RESIZE_SUCCESSFUL = 'resize_successful';
-    
-    /**
-     * The file path of the image to resize.
-     * 
-     * @access private
-     * @var NULL|string
-     */
-    private static $_filePath = null;
-
-    /**
-     * The location of where to save the resized image to.
-     * 
-     * @access private
-     * @var NULL|string
-     */
-    private static $_newPath = null;
 
     /**
      * The maximum width that the image should be.
@@ -56,7 +45,7 @@ class EazyE_ImageResizer
      * @access private
      * @var NULL|string
      */
-    private static $_maxwidth = null;
+    private $_maxwidth = null;
 
     /**
      * The maximum height that the image should be.
@@ -64,7 +53,7 @@ class EazyE_ImageResizer
      * @access private
      * @var NULL|string
      */
-    private static $_maxheight = null;
+    private $_maxheight = null;
 
     /**
      * The quality (0 - 100) that the resized image should be saved at.
@@ -72,7 +61,7 @@ class EazyE_ImageResizer
      * @access private
      * @var integer
      */
-    private static $_quality = 0;
+    private $_quality = 0;
     
     /**
      * BLA
@@ -80,7 +69,7 @@ class EazyE_ImageResizer
      * @access private
      * @var NULL|string
      */
-    private static $_newWidth = null;
+    private $_newWidth = null;
 
     /**
      * BLA
@@ -88,7 +77,7 @@ class EazyE_ImageResizer
      * @access private
      * @var NULL|string
      */
-    private static $_newHeight = null;
+    private $_newHeight = null;
     
     /**
      * BLA
@@ -96,7 +85,7 @@ class EazyE_ImageResizer
      * @access private
      * @var NULL|string
      */
-    private static $_actualWidth = null;
+    private $_actualWidth = null;
 
     /**
      * BLA
@@ -104,7 +93,7 @@ class EazyE_ImageResizer
      * @access private
      * @var NULL|string
      */
-    private static $_actualHeight = null;
+    private $_actualHeight = null;
     
     /**
      * Takes an image (from a file path) and resizes it. The newly resized image
@@ -112,26 +101,16 @@ class EazyE_ImageResizer
      * the original file. Or can be created in the original location, therefore
      * overwriting the original file. 
      *
-     * @static 
      * @access public
-     * @param string    $filePath   The file path of the image to resize
-     * @param string    $newPath    The file path where the resized image will 
-     *                              be created. Null to overwrite original.
      * @param integer   $maxwidth   The maximum height of the resized image
      * @param integer   $maxheight  The maximum width of the resized image
      * @param integer   $quality    The quality of the image 
      */
-    public static function resizeExistingImage($filePath, 
-                                                $newPath = null, 
-                                                $maxwidth = 1000, 
-                                                $maxheight = 1000, 
-                                                $quality = 100)
+    public function resize($maxwidth = 1000, 
+                            $maxheight = 1000, 
+                            $quality = 100)
     {
-        if (is_null($newPath)) {
-            $newPath = $filePath;
-        }
-        
-        $gdImage = getimagesize($filePath);
+        $gdImage = getimagesize($this->getSourceFileLocation());
         
         $actualWidth = $gdImage[0];
         $actualHeight = $gdImage[1];
@@ -164,30 +143,28 @@ class EazyE_ImageResizer
     
         
         // Assign the class properties:
-        self::$_filePath = $filePath;
-        self::$_newPath = $newPath;
-        self::$_maxwidth = $maxwidth;
-        self::$_maxheight = $maxheight;
-        self::$_quality = $quality;
+        $this->_maxwidth = $maxwidth;
+        $this->_maxheight = $maxheight;
+        $this->_quality = $quality;
         
-        self::$_newWidth = $newWidth;
-        self::$_newHeight = $newHeight;
+        $this->_newWidth = $newWidth;
+        $this->_newHeight = $newHeight;
         
-        self::$_actualWidth = $actualWidth;
-        self::$_actualHeight = $actualHeight;
+        $this->_actualWidth = $actualWidth;
+        $this->_actualHeight = $actualHeight;
         
         switch (strtolower($gdImage['mime'])) {
             case 'image/jpeg':
-                self::_createFromJpeg();
+                $this->_createFromJpeg();
                 break;
             case 'image/pjpeg':
-                self::_createFromPJpeg();
+                $this->_createFromPJpeg();
                 break;
             case 'image/png':
-                self::_createFromPng();
+                $this->_createFromPng();
                 break;
             case 'image/gif':
-                self::_createFromGif();
+                $this->_createFromGif();
                 break;
         
             default:
@@ -204,16 +181,15 @@ class EazyE_ImageResizer
     /**
      * Resizes images of type image/jpeg.
      *
-     * @static
      * @access public
      * @author Jon Matthews <joncarlmatthews@gmail.com>
      * @return void
      */
-    private static function _createFromJpeg()
+    private function _createFromJpeg()
     {
-        $img = imagecreatefromjpeg(self::$_filePath);
+        $img = imagecreatefromjpeg($this->getSourceFileLocation());
         
-        $new_img = imagecreatetruecolor(self::$_newWidth, self::$_newHeight);
+        $new_img = imagecreatetruecolor($this->_newWidth, $this->_newHeight);
         
         imagecopyresampled($new_img, 
                             $img, 
@@ -221,28 +197,27 @@ class EazyE_ImageResizer
                             0, 
                             0, 
                             0, 
-                            self::$_newWidth, 
-                            self::$_newHeight, 
-                            self::$_actualWidth, 
-                            self::$_actualHeight);
+                            $this->_newWidth, 
+                            $this->_newHeight, 
+                            $this->_actualWidth, 
+                            $this->_actualHeight);
                             
-        imagejpeg($new_img, self::$_newPath, self::$_quality);
+        imagejpeg($new_img, $this->getDestinationFileLocation(), $this->_quality);
     }
     
     /**
      * Resizes images of type image/jpeg.
      *
-     * @static 
      * @access private
      * @return void
      */
-    private static function _createFromPJpeg()
+    private function _createFromPJpeg()
     {
-        $img = imagecreatefromjpeg(self::$_filePath);
+        $img = imagecreatefromjpeg($this->getSourceFileLocation());
         
         imageinterlace($img, 1);
         
-        $new_img = imagecreatetruecolor(self::$_newWidth, self::$_newHeight);
+        $new_img = imagecreatetruecolor($this->_newWidth, $this->_newHeight);
         
         imagecopyresampled($new_img, 
                             $img, 
@@ -250,26 +225,25 @@ class EazyE_ImageResizer
                             0, 
                             0, 
                             0, 
-                            self::$_newWidth, 
-                            self::$_newHeight, 
-                            self::$_actualWidth, 
-                            self::$_actualHeight);
+                            $this->_newWidth, 
+                            $this->_newHeight, 
+                            $this->_actualWidth, 
+                            $this->_actualHeight);
                             
-        imagejpeg($new_img, self::$_newPath, self::$_quality);
+        imagejpeg($new_img, $this->getDestinationFileLocation(), $this->_quality);
     }
     
     /**
      * Resizes images of type image/png.
      *
-     * @static 
      * @access private
      * @return void
      */
-    private static function _createFromPng()
+    private function _createFromPng()
     {
-        $img = imagecreatefrompng(self::$_filePath);
+        $img = imagecreatefrompng($this->getSourceFileLocation());
         
-        $new_img = imagecreatetruecolor(self::$_newWidth, self::$_newHeight);
+        $new_img = imagecreatetruecolor($this->_newWidth, $this->_newHeight);
         
         imagecopyresampled($new_img, 
                             $img, 
@@ -277,26 +251,25 @@ class EazyE_ImageResizer
                             0, 
                             0, 
                             0, 
-                            self::$_newWidth, 
-                            self::$_newHeight, 
-                            self::$_actualWidth, 
-                            self::$_actualHeight);
+                            $this->_newWidth, 
+                            $this->_newHeight, 
+                            $this->_actualWidth, 
+                            $this->_actualHeight);
                             
-        imagepng($new_img, self::$_newPath);        
+        imagepng($new_img, $this->getDestinationFileLocation());        
     }
     
     /**
      * Resizes images of type image/gif.
      *
-     * @static 
      * @access private
      * @return void
      */
-    private static function _createFromGif()
+    private function _createFromGif()
     {
-        $img = imagecreatefromgif(self::$_filePath);
+        $img = imagecreatefromgif($this->getSourceFileLocation());
         
-        $new_img = imagecreatetruecolor(self::$_newWidth, self::$_newHeight);
+        $new_img = imagecreatetruecolor($this->_newWidth, $this->_newHeight);
         
         imagecopyresampled($new_img, 
                             $img, 
@@ -304,13 +277,11 @@ class EazyE_ImageResizer
                             0, 
                             0, 
                             0, 
-                            self::$_newWidth, 
-                            self::$_newHeight, 
-                            self::$_actualWidth, 
-                            self::$_actualHeight);
+                            $this->_newWidth, 
+                            $this->_newHeight, 
+                            $this->_actualWidth, 
+                            $this->_actualHeight);
                             
-        imagegif($new_img, self::$_newPath);    
+        imagegif($new_img, $this->getDestinationFileLocation());    
     }
-
-
 }
