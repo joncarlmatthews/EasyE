@@ -20,7 +20,7 @@ $cropper = new Cropper;
 
 // Make a square crop of image.png and save it as image-square.png
 $res = $cropper->setSourceFileLocation('/path/to/image.png')
-                ->setNewFileLocation('/path/to/image-square.png')
+                ->setDestinationFileLocation('/path/to/image-square.png')
                 ->cropToSquare();  
                 
 // View the result data:
@@ -36,7 +36,7 @@ $resizer = new Resizer;
 
 // Resize image-square.png to have a miximum height and width of 75 pixels. Save it as image-thumb.png
 $res = $resizer->setSourceFileLocation('/path/to/image-square.png')
-                ->setNewFileLocation('/path/to/image-thumb.png')
+                ->setDestinationFileLocation('/path/to/image-thumb.png')
                 ->resize(75, 75, true);  
                 
 // View the result data:
