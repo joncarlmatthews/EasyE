@@ -45,7 +45,7 @@ class Resizer extends AbstractImageProcessor
      * @access private
      * @var NULL|string
      */
-    private $_maxwidth = null;
+    private $_maxWidth = null;
 
     /**
      * The maximum height that the image should be.
@@ -53,7 +53,7 @@ class Resizer extends AbstractImageProcessor
      * @access private
      * @var NULL|string
      */
-    private $_maxheight = null;
+    private $_maxHeight = null;
 
     /**
      * The quality (0 - 100) that the resized image should be saved at.
@@ -62,9 +62,57 @@ class Resizer extends AbstractImageProcessor
      * @var integer
      */
     private $_quality = 0;
+
+    /**
+     * Source file image attributes.
+     * 
+     * @access private
+     * @var NULL|string
+     */
+    private $_sourceAttrs = null;
     
     /**
-     * BLA
+     * Source file image width.
+     * 
+     * @access private
+     * @var NULL|string
+     */
+    private $_sourceWidth = null;
+
+    /**
+     * Source file image height.
+     * 
+     * @access private
+     * @var NULL|string
+     */
+    private $_sourceHeight = null;
+
+    /**
+     * Destination file image attributes.
+     * 
+     * @access private
+     * @var NULL|string
+     */
+    private $_destAttrs = null;
+    
+    /**
+     * Destination file image width.
+     * 
+     * @access private
+     * @var NULL|string
+     */
+    private $_destWidth = null;
+
+    /**
+     * Destination file image height.
+     * 
+     * @access private
+     * @var NULL|string
+     */
+    private $_destHeight = null;
+    
+    /**
+     * Resized image width.
      * 
      * @access private
      * @var NULL|string
@@ -72,7 +120,7 @@ class Resizer extends AbstractImageProcessor
     private $_newWidth = null;
 
     /**
-     * BLA
+     * Resized image height.
      * 
      * @access private
      * @var NULL|string
@@ -80,82 +128,75 @@ class Resizer extends AbstractImageProcessor
     private $_newHeight = null;
     
     /**
-     * BLA
-     * 
-     * @access private
-     * @var NULL|string
-     */
-    private $_actualWidth = null;
-
-    /**
-     * BLA
-     * 
-     * @access private
-     * @var NULL|string
-     */
-    private $_actualHeight = null;
-    
-    /**
      * Takes an image (from a file path) and resizes it. The newly resized image
      * can then either be created in a different location, therefore maintainig 
      * the original file. Or can be created in the original location, therefore
-     * overwriting the original file. 
+     * overwriting the original file depending on the values passed to
+     * ::setSourceFileLocation() and ::setDestinationFileLocation()
      *
      * @access public
-     * @param integer   $maxwidth   The maximum height of the resized image
-     * @param integer   $maxheight  The maximum width of the resized image
+     * @param integer   $maxWidth   The maximum height of the resized image
+     * @param integer   $maxHeight  The maximum width of the resized image
      * @param integer   $quality    The quality of the image 
      */
-    public function resize($maxwidth = 1000, 
-                            $maxheight = 1000, 
+    public function resize($maxWidth = 1000, 
+                            $maxHeight = 1000, 
                             $quality = 100)
     {
-        $gdImage = getimagesize($this->getSourceFileLocation());
-        
-        $actualWidth = $gdImage[0];
-        $actualHeight = $gdImage[1];
-        
-        // Do we even need to resize the image!?
-        if ($actualWidth <= $maxwidth && $actualHeight <= $maxheight){
-            return array('source'           => $this->getSourceFileLocation(),
-                            'destination'   => $this->getDestinationFileLocation(),
-                            'result'        => self::RESULT_RESIZE_NOT_REQUIRED,
-                            'newHeight'     => $actualHeight,
-                            'newWidth'      => $actualWidth);
+        $this->_maxWidth    = $maxWidth;
+        $this->_maxHeight   = $maxHeight;
+        $this->_quality     = $quality;
+
+        $this->_sourceAttrs     = getimagesize($this->getSourceFileLocation());
+        $this->_sourceWidth     = $this->_sourceAttrs[0];
+        $this->_sourceHeight    = $this->_sourceAttrs[1];
+
+        if (is_file($this->getDestinationFileLocation()) && file_exists($this->getDestinationFileLocation())){
+            $this->_destAttrs     = getimagesize($this->getDestinationFileLocation());
+            $this->_destWidth     = $this->_destAttrs[0];
+            $this->_destHeight    = $this->_destAttrs[1];
         }
         
-        $ratio = $actualWidth / $maxwidth;
+        // Do we even need to resize the image!?
+        if ($this->_sourceWidth <= $this->_maxWidth && $this->_sourceHeight <= $this->_maxHeight){
+
+            return array(
+                'result' => self::RESULT_RESIZE_NOT_REQUIRED,
+
+                'sourceFilePath' => $this->getSourceFileLocation(),
+                'sourceFileWidth' => $this->_sourceWidth,
+                'sourceFileHeight' => $this->_sourceHeight,
+                
+                'destinationFilePath' => $this->getDestinationFileLocation(),
+                'destinationFileWidth' => $this->_destWidth,
+                'destinationFileHeight' => $this->_destHeight,
+            );
+
+        }
+        
+        $ratio = $this->_sourceWidth / $this->_maxWidth;
                 
         // set the defaults:
-        $newWidth = intval($actualWidth);
-        $newHeight = intval($actualHeight);     
+        $newWidth   = intval($this->_sourceWidth);
+        $newHeight  = intval($this->_sourceHeight);     
         
-        if ($actualWidth > $maxwidth) {
-            $newWidth = intval($maxwidth);
-            $newHeight = intval($actualHeight / $ratio);
+        if ($this->_sourceWidth > $this->_maxWidth) {
+            $newWidth   = intval($this->_maxWidth);
+            $newHeight  = intval($this->_sourceHeight / $ratio);
         }
         
         // once we've got the size width, is the height now small enough? 
-        if ($newHeight > $maxheight) {
+        if ($newHeight > $this->_maxHeight) {
             // set a new ratio
-            $ratio = $newHeight / $maxheight;
-            $newWidth = intval($newWidth / $ratio);
-            $newHeight = intval($maxheight);
-        }       
-    
+            $ratio      = $newHeight / $this->_maxHeight;
+            $newWidth   = intval($newWidth / $ratio);
+            $newHeight  = intval($this->_maxHeight);
+        }
         
-        // Assign the class properties:
-        $this->_maxwidth = $maxwidth;
-        $this->_maxheight = $maxheight;
-        $this->_quality = $quality;
+        $this->_newWidth    = $newWidth;
+        $this->_newHeight   = $newHeight;
         
-        $this->_newWidth = $newWidth;
-        $this->_newHeight = $newHeight;
-        
-        $this->_actualWidth = $actualWidth;
-        $this->_actualHeight = $actualHeight;
-        
-        switch (strtolower($gdImage['mime'])) {
+        switch (strtolower($this->_sourceAttrs['mime'])) {
             case 'image/jpeg':
                 $this->_createFromJpeg();
                 break;
@@ -170,16 +211,21 @@ class Resizer extends AbstractImageProcessor
                 break;
         
             default:
-                throw new Exception('Mime Type \'' . $gdImage['mime'] . '\' not supported');
+                throw new Exception('Mime Type \'' . $this->_sourceAttrs['mime'] . '\' not supported');
                 break;
         }
         
-        return array('source'           => $this->getSourceFileLocation(),
-                        'destination'   => $this->getDestinationFileLocation(),
-                        'result'        => self::RESULT_RESIZE_SUCCESSFUL,
-                        'newHeight'     => $newHeight,
-                        'newWidth'      => $newWidth,
-                        );
+        return array(
+            'result' => self::RESULT_RESIZE_SUCCESSFUL,
+
+            'sourceFilePath' => $this->getSourceFileLocation(),
+            'sourceFileWidth' => $this->_sourceHeight,
+            'sourceFileHeight' => $this->_sourceWidth,
+            
+            'destinationFilePath' => $this->getDestinationFileLocation(),
+            'destinationFileWidth' => $newWidth,
+            'destinationFileHeight' => $newHeight,
+        );
                 
     }
     
@@ -204,8 +250,8 @@ class Resizer extends AbstractImageProcessor
                             0, 
                             $this->_newWidth, 
                             $this->_newHeight, 
-                            $this->_actualWidth, 
-                            $this->_actualHeight);
+                            $this->_sourceWidth, 
+                            $this->_sourceHeight);
                             
         $res = @imagejpeg($new_img, $this->getDestinationFileLocation(), $this->_quality);
 
@@ -236,8 +282,8 @@ class Resizer extends AbstractImageProcessor
                             0, 
                             $this->_newWidth, 
                             $this->_newHeight, 
-                            $this->_actualWidth, 
-                            $this->_actualHeight);
+                            $this->_sourceWidth, 
+                            $this->_sourceHeight);
                             
         $res = @imagejpeg($new_img, $this->getDestinationFileLocation(), $this->_quality);
 
@@ -266,8 +312,8 @@ class Resizer extends AbstractImageProcessor
                             0, 
                             $this->_newWidth, 
                             $this->_newHeight, 
-                            $this->_actualWidth, 
-                            $this->_actualHeight);
+                            $this->_sourceWidth, 
+                            $this->_sourceHeight);
                             
         $res = @imagepng($new_img, $this->getDestinationFileLocation());   
 
@@ -296,8 +342,8 @@ class Resizer extends AbstractImageProcessor
                             0, 
                             $this->_newWidth, 
                             $this->_newHeight, 
-                            $this->_actualWidth, 
-                            $this->_actualHeight);
+                            $this->_sourceWidth, 
+                            $this->_sourceHeight);
                             
         $res = @imagegif($new_img, $this->getDestinationFileLocation());
 
