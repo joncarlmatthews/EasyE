@@ -141,7 +141,8 @@ class Resizer extends AbstractImageProcessor
      */
     public function resize($maxWidth = 1000, 
                             $maxHeight = 1000, 
-                            $quality = 100)
+                            $quality = 100,
+                            $alwaysResize = true)
     {
         $this->_maxWidth    = $maxWidth;
         $this->_maxHeight   = $maxHeight;
@@ -158,20 +159,22 @@ class Resizer extends AbstractImageProcessor
         }
         
         // Do we even need to resize the image!?
-        if ($this->_sourceWidth <= $this->_maxWidth && $this->_sourceHeight <= $this->_maxHeight){
+        if (!$alwaysResize){
+            if ($this->_sourceWidth <= $this->_maxWidth && $this->_sourceHeight <= $this->_maxHeight){
 
-            return array(
-                'result' => self::RESULT_RESIZE_NOT_REQUIRED,
+                return array(
+                    'result' => self::RESULT_RESIZE_NOT_REQUIRED,
 
-                'sourceFilePath' => $this->getSourceFileLocation(),
-                'sourceFileWidth' => $this->_sourceWidth,
-                'sourceFileHeight' => $this->_sourceHeight,
-                
-                'destinationFilePath' => $this->getDestinationFileLocation(),
-                'destinationFileWidth' => $this->_destWidth,
-                'destinationFileHeight' => $this->_destHeight,
-            );
+                    'sourceFilePath' => $this->getSourceFileLocation(),
+                    'sourceFileWidth' => $this->_sourceWidth,
+                    'sourceFileHeight' => $this->_sourceHeight,
+                    
+                    'destinationFilePath' => $this->getDestinationFileLocation(),
+                    'destinationFileWidth' => $this->_destWidth,
+                    'destinationFileHeight' => $this->_destHeight,
+                );
 
+            }
         }
         
         $ratio = $this->_sourceWidth / $this->_maxWidth;
