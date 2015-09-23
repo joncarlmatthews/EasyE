@@ -28,17 +28,38 @@ class Cropper extends AbstractImageProcessor
     
     const CROP_RESULT_SUCCESS = 'crop_success';
     const CROP_RESULT_NOTHING_TO_DO = 'destination is already at required dimensions';
+    const CROP_RESULT_COPY = 'image copied';
 
     private $_croppedFilePermissions = 0755;
     private $_cropQuality = 100;
 
+    private $_sourceFileWidth = 0;
+    private $_sourceFileHeight = 0;
+
     private $_createMethod = null;
     private $_saveMethod = null;
+    private $_newImageHeight = null;
+    private $_newImageWidth = null;
+    private $_newImageExt = null;
+    private $_xPos = null;
+    private $_yPos = null;
+
+    public function setQuality($value)
+    {
+        $this->_cropQuality = (int)$value;
+
+        return $this;
+    }
+
+    public function setFilePermissions($octal)
+    {
+        $this->_croppedFilePermissions = $octal;
+
+        return $this;
+    }
 
     public function cropToSquare($location = self::CROP_LOCATION_CENTER)
     {
-        $this->_preCropChecks();
-
         $sourceFileLocation = $this->getSourceFileLocation();
 
         $sourceFileInfo     = GetImageSize($sourceFileLocation);
@@ -50,27 +71,19 @@ class Cropper extends AbstractImageProcessor
         switch ($sourceFileMime){
             case 'jpg':
             case 'jpeg':
-                $imageCreateFunc = 'ImageCreateFromJPEG';
+                $this->_createMethod = self::CREATE_METHOD_JPEG;
                 break;
 
             case 'png':
-                $imageCreateFunc = 'ImageCreateFromPNG';
+                $this->_createMethod = self::CREATE_METHOD_PNG;
                 break;
 
             case 'bmp':
-                $imageCreateFunc = 'ImageCreateFromBMP';
+                $this->_createMethod = self::CREATE_METHOD_BMP;
                 break;
 
             case 'gif':
-                $imageCreateFunc = 'ImageCreateFromGIF';
-                break;
-
-            case 'vnd.wap.wbmp':
-                $imageCreateFunc = 'ImageCreateFromWBMP';
-                break;
-
-            case 'xbm':
-                $imageCreateFunc = 'ImageCreateFromXBM';
+                $this->_createMethod = self::CREATE_METHOD_GIF;
                 break;
 
             default:
@@ -80,40 +93,30 @@ class Cropper extends AbstractImageProcessor
                 break;
         }
 
+        // What sort of image are we saving?
         $destinationFileLocation = $this->getDestinationFileLocation();
         $destinationFileMime     = pathinfo($destinationFileLocation, PATHINFO_EXTENSION);
 
-        // What sort of image are we saving?         
         switch ($destinationFileMime){
             case 'jpg':
             case 'jpeg':
-                $imageSaveFunc = 'ImageJPEG';
-                $newImageExt = 'jpg';
+                $this->_saveMethod = self::SAVE_METHOD_JPEG;
+                $this->_newImageExt = self::FILE_EXT_JPEG;
                 break;
 
             case 'png':
-                $imageSaveFunc = 'ImagePNG';
-                $newImageExt = 'png';
+                $this->_saveMethod = self::SAVE_METHOD_PNG;
+                $this->_newImageExt = self::FILE_EXT_PNG;
                 break;
 
             case 'bmp':
-                $imageSaveFunc = 'ImageBMP';
-                $newImageExt = 'bmp';
+                $this->_saveMethod = self::SAVE_METHOD_BMP;
+                $this->_newImageExt = self::FILE_EXT_BMP;
                 break;
 
             case 'gif':
-                $imageSaveFunc = 'ImageGIF';
-                $newImageExt = 'gif';
-                break;
-
-            case 'vnd.wap.wbmp':
-                $imageSaveFunc = 'ImageWBMP';
-                $newImageExt = 'bmp';
-                break;
-
-            case 'xbm':
-                $imageSaveFunc = 'ImageXBM';
-                $newImageExt = 'xbm';
+                $this->_saveMethod = self::SAVE_METHOD_GIF;
+                $this->_newImageExt = self::FILE_EXT_GIF;
                 break;
 
             default:
@@ -126,34 +129,14 @@ class Cropper extends AbstractImageProcessor
         // Does the destination file already exists?
         if (is_file($destinationFileLocation)){
 
-            $destinationFileInfo     = GetImageSize($destinationFileLocation);
-            $destinationFileWidth    = (int)$destinationFileInfo[0];
-            $destinationFileHeight   = (int)$destinationFileInfo[1];
-            $destinationFileMime     = pathinfo($destinationFileInfo, PATHINFO_EXTENSION);
+            // Is the destinatin file the same as the source file?
+            if ($this->getSourceFileLocation() == $this->getDestinationFileLocation()){
 
-            // Are the dimensions of the desination file already square?
-            if ($destinationFileWidth == $destinationFileHeight){
+                // Is the source file already square?
+                if( ($sourceFileHeight == $sourceFileWidth) ){
 
-                // The source image is already a square, return result.
-                return array('result' => self::CROP_RESULT_NOTHING_TO_DO,
-                                'sourceFilePath' => $sourceFileLocation,
-                                'sourceFileHeight' => $sourceFileHeight,
-                                'sourceFileWidth' => $sourceFileWidth,
-                                'destinationFilePath' => $sourceFileLocation,
-                                'destinationFileHeight' => $sourceFileHeight,
-                                'destinationFileWidth' => $sourceFileWidth
-                                );
-            }else{
-                die('TODO overwrite destination with source.');
-            }
-        
-        }
-
-        // Are the dimensions of the source file already square?
-        if($sourceFileHeight == $sourceFileWidth){
-
-            // The source image is already a square, return result.
-            return array('result' => self::CROP_RESULT_NOTHING_TO_DO,
+                    // There's nothing to do.
+                    return array('result' => self::CROP_RESULT_NOTHING_TO_DO,
                             'sourceFilePath' => $sourceFileLocation,
                             'sourceFileHeight' => $sourceFileHeight,
                             'sourceFileWidth' => $sourceFileWidth,
@@ -162,10 +145,44 @@ class Cropper extends AbstractImageProcessor
                             'destinationFileWidth' => $sourceFileWidth
                             );
 
-        // Calculate the coordinates.
 
-        // Horizontal Rectangle?
+                }
+
+            }else{
+
+                // Remove the file to be replaced.
+                $res = unlink($destinationFileLocation);
+
+                if (!$res){
+                    throw new Exception('Cannot remove file at destination');
+                }
+
+            }
+        }
+
+        // Are the dimensions of the source file already square?
+        if( ($sourceFileHeight == $sourceFileWidth) ){
+
+            // The source image is already a square, simply copy the image from
+            // source to destination.
+            $res = copy($this->getSourceFileLocation(), $this->getDestinationFileLocation());
+
+            if (!$res){
+                throw new Exception('Cannot copy file from source to destination');
+            }
+
+            return array('result' => self::CROP_RESULT_COPY,
+                            'sourceFilePath' => $this->getSourceFileLocation(),
+                            'sourceFileHeight' => $sourceFileHeight,
+                            'sourceFileWidth' => $sourceFileWidth,
+                            'destinationFilePath' => $this->getDestinationFileLocation(),
+                            'destinationFileHeight' => $sourceFileHeight,
+                            'destinationFileWidth' => $sourceFileWidth
+                            );
+        
         }elseif($sourceFileWidth > $sourceFileHeight){
+
+            // ...Horizontal Rectangle
 
            if ($location == 'center'){
 
@@ -185,11 +202,12 @@ class Cropper extends AbstractImageProcessor
                $yPos = 0;
            }
 
-           $newWidth = $sourceFileHeight;
-           $newHeight = $sourceFileHeight;
-            
-        // Vertical Rectangle?
+           $this->_newImageWidth = $sourceFileHeight;
+           $this->_newImageHeight = $sourceFileHeight;
+        
         }elseif($sourceFileHeight > $sourceFileWidth){
+
+            // Vertical Rectangle.
 
             if($location == 'center'){
 
@@ -210,9 +228,59 @@ class Cropper extends AbstractImageProcessor
 
             }
 
-            $newWidth = $sourceFileWidth;
-            $newHeight = $sourceFileWidth;
+            $this->_newImageWidth = $sourceFileWidth;
+            $this->_newImageHeight = $sourceFileWidth;
         }
+
+        // Perform crop...
+
+        $this->_xPos = $xPos;
+        $this->_yPos = $yPos;
+
+        $this->_sourceFileWidth = $sourceFileWidth;
+        $this->_sourceFileHeight = $sourceFileHeight;
+
+        $imageCreateFunc    = strtolower($this->_createMethod);
+        $imageSaveFunc      = strtolower($this->_saveMethod);
+
+        $image = $imageCreateFunc($this->getSourceFileLocation());
+        
+        if (!$image){
+            throw new Exception('Could not create image using ' . $imageCreateFunc);
+        }
+
+        $newImage = ImageCreateTrueColor($this->_newImageWidth, $this->_newImageHeight);
+
+        // Crop to Square using the given dimensions
+        $copyRes = imagecopyresampled($newImage, 
+                                        $image, 
+                                        0, 
+                                        0, 
+                                        $this->_xPos, 
+                                        $this->_Pos, 
+                                        $this->_sourceFileWidth, 
+                                        $this->_sourceFileHeight, 
+                                        $this->_sourceFileWidth, 
+                                        $this->_sourceFileHeight);
+
+        if (!$copyRes){
+            throw new Exception('Could not crop image using imagecopyresampled()');
+        }
+
+        // Save image 
+        $process = $imageSaveFunc($newImage, $this->getDestinationFileLocation(), $this->_cropQuality);
+        
+        if (!$process){
+            throw new Exception('There was a problem saving the cropped image.');
+        }
+
+        // Set permissions of the cropped image.
+        @chmod($filename, $this->_croppedFilePermissions);
+
+        // Extract the destination's height and width.
+        $destinationFileInfo     = GetImageSize($this->getDestinationFileLocation());
+        $destinationFileWidth    = (int)$destinationFileInfo[0];
+        $destinationFileHeight   = (int)$destinationFileInfo[1];
 
         // Return result.
         return array('result' => self::CROP_RESULT_SUCCESS,
@@ -222,62 +290,7 @@ class Cropper extends AbstractImageProcessor
                             'destinationFilePath' => $destinationFileLocation,
                             'destinationFileHeight' => $destinationFileHeight,
                             'destinationFileWidth' => $destinationFileWidth
-                            );
+                        );
     }
 
-    private function _performCrop()
-    {
-        $image = $imageCreateFunc($this->getSourceFileLocation());
-        
-        if (!$image){
-            throw new Exception('Could not create image using ' . $imageCreateFunc);
-        }
-
-        $newImage = ImageCreateTrueColor($newWidth, $newHeight);
-
-        // Crop to Square using the given dimensions
-        $copyRes = imagecopyresampled($newImage, 
-                                        $image, 
-                                        0, 
-                                        0, 
-                                        $xPos, 
-                                        $yPos, 
-                                        $sourceFileWidth, 
-                                        $sourceFileHeight, 
-                                        $sourceFileWidth, 
-                                        $sourceFileHeight);
-
-        if (!$copyRes){
-            throw new Exception('Could not crop image using imagecopyresampled()');
-        }
-            
-        if(is_null($this->getSourceFileLocation())){
-
-            $filename = $this->getSourceFileLocation();
-
-            if (!is_writable($filename)){
-                throw new Exception('Insufficient privileges to write to ' . $filename);
-            }
-
-        }else{
-
-            $filename = $this->getSourceFileLocation();
-
-        }
-
-        // Save image 
-        $process = $imageSaveFunc($newImage, $filename, $this->_cropQuality);
-        
-        if (!$process){
-            throw new Exception('There was a problem saving the cropped image.');
-        }
-
-        // Set permissions of the cropped image.
-        chmod($filename, $this->_croppedFilePermissions);
-    }
-
-    private function _preCropChecks()
-    {
-        // Is writtable etc here
-    }
 }

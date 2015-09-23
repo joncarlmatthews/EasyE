@@ -6,8 +6,8 @@ require_once 'Exception.php';
 
 abstract class AbstractImageProcessor 
 {
-    private $_sourceFileLocation = null;
-    private $_destinationFileLocation = null;
+    protected $_sourceFileLocation = null;
+    protected $_destinationFileLocation = null;
 
     public function __construct($sourceFileLocation = null, 
                                     $destinationFileLocation = null)
