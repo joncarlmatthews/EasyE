@@ -1,8 +1,8 @@
 {
   "name": "joncarlmatthews/EasyE",
   "type": "library",
-  "description": “The EasyE library is a collection of simple, easy to use PHP image processing classes using the GD extension.",
-  "homepage": " https://github.com/joncarlmatthews/EasyE",
+  "description": "The EasyE library is a collection of simple, easy to use PHP image processing classes using the GD extension.",
+  "homepage": "https://github.com/joncarlmatthews/EasyE",
   "authors": [
     {
       "name": "Jon Matthews",
